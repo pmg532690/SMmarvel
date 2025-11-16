@@ -54,7 +54,7 @@ int rolldie(int player)
     return (rand()%MAX_DIE + 1);
 }
 
-
+#if 0 
 //action code when a player stays at a node
 void actionNode(int player)
 {
@@ -66,7 +66,7 @@ void actionNode(int player)
     }
 }
 
-
+#endif
 
 int main(int argc, const char * argv[]) {
     
@@ -75,6 +75,8 @@ int main(int argc, const char * argv[]) {
     int type;
     int credit;
     int energy;
+    int cnt;
+    int pos;
     
     board_nr = 0;
     food_nr = 0;
@@ -93,15 +95,17 @@ int main(int argc, const char * argv[]) {
     }
     
     printf("Reading board component......\n");
-    while () //read a node parameter set
+    while ( fscanf(fp, "%s %i %i %i", name, &type, &credit, &energy) == 4 ) //read a node parameter set
     {
         //store the parameter set
+        //printf("%s %i %i %i\n",name, type, credit, energy);
+        board_nr = smmObj_genNode(name, type, credit, energy);
     }
     fclose(fp);
     printf("Total number of board nodes : %i\n", board_nr);
     
     
-    
+ #if 0   
     //2. food card config 
     if ((fp = fopen(FOODFILEPATH,"r")) == NULL)
     {
@@ -117,7 +121,7 @@ int main(int argc, const char * argv[]) {
     fclose(fp);
     printf("Total number of food cards : %i\n", food_nr);
     
-    
+
     
     //3. festival card config 
     if ((fp = fopen(FESTFILEPATH,"r")) == NULL)
@@ -145,9 +149,11 @@ int main(int argc, const char * argv[]) {
     while ();
     generatePlayers();
     */
-    
+#endif
+	cnt = 0;
+	pos = 0;
     //3. SM Marble game starts ---------------------------------------------------------------------------------
-    while () //is anybody graduated?
+    while (cnt < 5) //is anybody graduated?
     {
         int die_result;
         
@@ -159,13 +165,16 @@ int main(int argc, const char * argv[]) {
         
         //4-3. go forward
         //goForward();
-
+		//pos = pos + 2;
+		pos = (pos + rand()%6+1)%board_nr;
+		printf("node : %s, type : %i (%s)\n",smmObj_getName(pos),smmObj_getType(pos),smmObj_getTypeName(pos));
 		//4-4. take action at the destination node of the board
         //actionNode();
         
         //4-5. next turn
-        
+        cnt++;
     }
-    
+   
+
     return 0;
 }
