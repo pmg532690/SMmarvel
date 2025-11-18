@@ -16,7 +16,7 @@
 #define SMMNODE_TYPE_LECTURE			0
 #define SMMNODE_TYPE_RESTAURANT			1
 #define SMMNODE_TYPE_LABORATORY			2
-#define SMMNODE_TYPE_HOME			3
+#define SMMNODE_TYPE_HOME				3
 #define SMMNODE_TYPE_GOTOLAB			4
 #define SMMNODE_TYPE_FOODCHANGE			5
 #define SMMNODE_TYPE_FESTIVAL			6
@@ -57,15 +57,18 @@ char* smmObj_getName(int node_nr)
 {
 	return (smm_name[node_nr]);
 }
-int* smmObj_getType(int node_nr)
+int smmObj_getType(int node_nr)
 {
 	return (smm_type[node_nr]);
 }
-char* smmObj_getTypeName(int node_nr)
+int smmObj_getEnergy(int node_nr)
 {
-	return (smmNodeName[smm_type[node_nr]]);
+	return (smm_energy[node_nr]);
 }
-
+char* smmObj_getNodeName(int node_type)
+{
+	return (smmNodeName[node_type]);
+}
 
 
 
