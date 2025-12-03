@@ -51,7 +51,6 @@ int smmObj_genNode(char* name, int type, int credit, int energy)
 }
 
 
-
 //member retrieving
 char* smmObj_getName(int node_nr)
 {
