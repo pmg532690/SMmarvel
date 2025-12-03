@@ -48,6 +48,7 @@ void goForward(int player, int step)
     //player_pos[player] = player_pos[player]+ step;
     printf("start from %i(%s) (%i)\n", player_pos[player], 
                                          smmObj_getName(player_pos[player]), step);
+
     for (i=0;i<step;i++)
     {
         player_pos[player] = (player_pos[player] + 1)%board_nr;
@@ -195,6 +196,7 @@ int main(int argc, const char * argv[]) {
         if (player_nr <= 0 || player_nr > MAX_PLAYER)
            printf("Invalid player number!\n");
     }
+    
     while (player_nr <= 0 || player_nr > MAX_PLAYER);
     generatePlayers(player_nr, smmObj_getEnergy(0));
     
