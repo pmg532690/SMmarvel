@@ -16,7 +16,6 @@
 
 
 
-
 #define GRADE_A+		0
 #define GRADE_A0		1
 #define GRADE_A-		2
@@ -37,9 +36,11 @@ static char smmObj_nodeName [MAX_NODETYPE][MAX_CHARNAME] = {
 		"laboratory",
 		"home",
 		"gotoLab",
-		"foodChance",
+		"foodChance", 
 		"festival"
 };
+
+#define MAX_GRADE SMMNODE_MAX_GRADE
 
 static char smmObj_gradeName [MAX_GRADE][MAX_CHARNAME] = {
 		"A+",
@@ -69,7 +70,7 @@ typedef struct {
 } smmObj_object_t;
 
 //object generation
-void* smmObj_genObject(char* name, int objType, int type, int credit, int energy, int grade)
+void* smmObj_getObject(char* name, int objType, int type, int credit, int energy, int grade)
 {
 	smmObj_object_t* ptr;
 	ptr = (smmObj_object_t*)malloc(sizeof(smmObj_object_t));
@@ -108,24 +109,27 @@ int smmObj_getObjectEnergy(void *ptr)
 	smmObj_object_t* objPtr = (smmObj_object_t*)ptr;
 	return (objPtr-> energy);
 }
-char* smmObj_getObjectName(void *ptr)
+int smmObj_getObjectGrade(void *ptr)
 {
-	smmObj_object_t* objPtr = (smmObj_object_t*)ptr;
-	return (objPtr-> name);
+    smmObj_object_t* objPtr = (smmObj_object_t*)ptr;
+    return (objPtr->grade);
 }
 
 
 
 
-#if 0
+
 //element to string
-char* smmObj_getNodeName(smmNode_e type)
+char* smmObj_getNodeName(int type)
 {
-    return smmNodeName[type];
+    if (type >= 0 && type < MAX_NODETYPE)
+        return smmObj_nodeName[type];
 }
 
-char* smmObj_getGradeName(smmGrade_e grade)
+char* smmObj_getGradeName(int grade)
 {
-    return smmGradeName[grade];
+    if (grade >= 0 && grade < MAX_GRADE)
+        return smmObj_gradeName[grade];
+    
 }
-#endif
+
