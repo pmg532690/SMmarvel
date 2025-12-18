@@ -11,6 +11,7 @@
 #define LIST_END            -1
 #define MAX_LIST            LISTNO_OFFSET_GRADE+MAX_PLAYER
 
+void* smmdb_getData(int list_nr, int index);
 //node definition for linked list
 typedef struct node{
     int index;      //index of the node
@@ -221,4 +222,22 @@ void* smmdb_getData(int list_nr, int index)
         printf("[ERROR] smmdb_getData() : there is no data of index %i\n", index);
     
     return obj;
+}
+
+void* findGrade(int player, char *lectureName){
+	int i;
+	int list_num = LISTNO_OFFSET_GRADE + player;
+	int lenhistory = smmdb_len(list_num);
+	void* obj_ptr;
+	
+	for (i = 0; i < lenhistory; i++){
+		
+		obj_ptr = smmdb_getData(list_num, i);
+		if (obj_ptr != NULL){
+			if (strcmp(smmObj_getObjectName(obj_ptr), lectureName) == 0) {
+				return obj_ptr;
+			}
+		}
+	}
+	return NULL;
 }
