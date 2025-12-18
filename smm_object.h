@@ -20,17 +20,18 @@
 #define SMMNODE_OBJTYPE_GRADE	1
 #define SMMNODE_OBJTYPE_FOOD	2
 #define SMMNODE_OBJTYPE_FEST	3
-/* grade :
-    A+,
-    A0,
-    A-,
-    B+,
-    B0,
-    B-,
-    C+,
-    C0,
-    C-
-*/
+
+typedef enum smmGrade {
+	smmGrade_AP = 0,
+	smmGrade_A0,
+	smmGrade_AM,
+	smmGrade_BP,
+	smmGrade_B0,
+	smmGrade_BM,
+	smmGrade_CP,
+	smmGrade_C0,
+	smmGrade_CM,
+}smmGrade_e;
 
 #define SMMNODE_MAX_GRADE       13
 
