@@ -11,6 +11,8 @@
 #include "smm_database.h"
 #include "smm_common.h"
 
+void* findGrade(int player, char *lectureName); 
+
 #define BOARDFILEPATH "marbleBoardConfig.txt"
 #define FOODFILEPATH "marbleFoodConfig.txt"
 #define FESTFILEPATH "marbleFestivalConfig.txt"
@@ -37,7 +39,21 @@ void printPlayerStatus(void); //print all player status at the beginning of each
 
 //function prototypes
 #if 0
-
+void readingboard(){
+	FILE * fp = fopen("marbleBoardConfig.txt", "r");
+	
+	char name[50];
+	int type, credit, energy;
+	
+	while(fscanf(fp, "%d %d %d %d", name, &type, &credit, &energy) != EOF){
+		//정보 읽어오기
+		void* newNode = smm_obj_create(name, type, credit, energy);
+		
+		//데이터베이스에 정보 저장
+		smm_add_node(newNode); 
+	}
+	fclose(fp);
+}
 void* findGrade(int player, char *lectureName) //find the grade from the player's grade history
 {
       int size = smmdb_len(LISTNO_OFFSET_GRADE+player);
@@ -226,8 +242,8 @@ void actionNode(int player)
 	int type = smmObj_getObjectType (ptr);
 	int credit = smmObj_getObjectCredit (ptr);
 	int energy = smmObj_getObjectEnergy (ptr);
-	int grade;
-	void *gradePtr;
+	char* nodeName = smmObj_getObjectName(ptr);
+	
 	printf(" --> player%i pos : %i, type : %s, credit : %i, energy : %i\n",
 			player, smm_players[player].pos, smmObj_getNodeName(type), credit, energy);
 			
@@ -235,25 +251,39 @@ void actionNode(int player)
     {
         //case lecture:
         case SMMNODE_TYPE_LECTURE:
-        	smm_players[player].credit += credit;
-        	smm_players[player].energy -= energy;
-        	
-        	grade = rand()%SMMNODE_MAX_GRADE;
-        	
-        	gradePtr = smmObj_getObject(smmObj_getObjectName(ptr), SMMNODE_OBJTYPE_GRADE,
-							type,credit, energy, grade);
-			smmdb_addTail(LISTNO_OFFSET_GRADE+player, gradePtr);
-            break;
-        case SMMNODE_TYPE_RESTAURANT:
+        	//이미 수강한 강의인지 확인 
+        	if (findGrade(player, nodeName) == NULL){
+        		//현재 에너지가 필요한 에너지보다 많은지 확인 
+        		if (smm_players[player].energy >= energy){
+        			//성적 산출 
+        			int grade_idx = takeLecture(player, nodeName, credit);
+        			
+        			if (grade_idx != -1){
+        				smm_players[player].credit += credit;
+        				smm_players[player].energy -= energy;
+        				
+        				void* gradePtr = smmObj_getObject(nodeName, SMMNODE_OBJTYPE_GRADE, type, credit, energy, grade_idx);
+        				smmdb_addTail(LISTNO_OFFSET_GRADE + player, gradePtr);
+					}
+				} else{
+				printf("에너지가 부족합니다.\n");
+				}
+			} else {
+				printf("이미 수강한 과목힙니다.\n");
+				
+			} 
+			break; 
+        
+        case SMMNODE_TYPE_RESTAURANT: //에너지 보충 
         	smm_players[player].energy += energy;
             break;
         case SMMNODE_TYPE_LABORATORY:
             break;
         case SMMNODE_TYPE_HOME:
-        	smm_players[player].energy += energy;
+        	smm_players[player].energy += energy; //에너지 보충 
         	if (smm_players[player].credit >= GRADUATE_CREDIT)
         	{
-        		smm_players[player].flag_graduated = 1;
+        		smm_players[player].flag_graduated = 1;//졸업 
 			}
             break;
         case SMMNODE_TYPE_GOTOLAB:
@@ -310,7 +340,7 @@ int main(int argc, const char * argv[]) {
     printf("Total number of board nodes : %i\n", smm_board_nr);
     
     
-#if 0   
+#if 1  
     //2. food card config 
     if ((fp = fopen(FOODFILEPATH,"r")) == NULL)
     {
@@ -319,9 +349,11 @@ int main(int argc, const char * argv[]) {
     }
     
     printf("\n\nReading food card component......\n");
-    while () //read a food parameter set
+    while (fscanf(fp, "%s %i", name, &energy) == 2) //read a food parameter set
     {
-        //store the parameter set
+        void* ptr = smmObj_getObject(name, SMMNODE_OBJTYPE_FOOD, 0, 0, energy, 0);//store the parameter set
+        smmdb_addTail(LISTNO_FOODCARD, ptr);
+        smm_food_nr++;
     }
     fclose(fp);
     printf("Total number of food cards : %i\n", smm_food_nr);
@@ -336,9 +368,11 @@ int main(int argc, const char * argv[]) {
     }
     
     printf("\n\nReading festival card component......\n");
-    while () //read a festival card string
+    while (fscanf(fp, "%s", name) == 1) //read a festival card string
     {
-        //store the parameter set
+        void* ptr = smmObj_getObject(name, SMMNODE_OBJTYPE_FEST, 0, 0, 0, 0);//store the parameter set
+        smmdb_addTail(LISTNO_FESTCARD, ptr);
+        smm_festival_nr++;
     }
     fclose(fp);
     printf("Total number of festival cards : %i\n", smm_festival_nr);
