@@ -38,12 +38,110 @@ void printPlayerStatus(void); //print all player status at the beginning of each
 //function prototypes
 #if 0
 
-void printGrades(int player); //print grade history of the playe
-float calcAverageGrade(int player); //calculate average grade of the player
-smmGrade_e takeLecture(int player, char *lectureName, int credit); //take the lecture (insert a grade of the player)
-void* findGrade(int player, char *lectureName); //find the grade from the player's grade history
+void* findGrade(int player, char *lectureName) //find the grade from the player's grade history
+{
+      int size = smmdb_len(LISTNO_OFFSET_GRADE+player);
+      int i;
+      
+      for (i=0;i<size;i++)
+      {
+          void *ptr = smmdb_getData(LISTNO_OFFSET_GRADE+player, i);
+          if (strcmp(smmObj_getObjectName(ptr), lectureName) == 0)
+          {
+              return ptr;
+          }
+      }
+      
+      return NULL;
+}
+
 void printGrades(int player); //print all the grade history of the player
 #endif
+
+char* get_grade_str(int grade_idx) {
+    switch(grade_idx) {
+        case 0: return "A+";
+        case 1: return "A0";
+        case 2: return "A-";
+        case 3: return "B+";
+        case 4: return "B0";
+        case 5: return "B-";
+        case 6: return "C+";
+        case 7: return "C0";
+        case 8: return "C-";
+        default: return "ERROR";
+    }
+}
+smmGrade_e takeLecture(int player, char *lectureName, int credit) //take the lecture (insert a grade of the player)
+{
+	int selection;
+	smmGrade_e grade;
+	int grade_idx;
+	
+	//1.수강 여부 확인
+	printf("%s 강의를 수강하시겠습니까? (수강 시 1, 수강 포기 시 0)", lectureName);
+	scanf("%d", &selection);
+	//2.성적 배정 
+	if (selection == 1){
+		grade = (smmGrade_e)(rand() % 9);
+		
+		printf("성적 결과: %s, %d 학점\n", get_grade_str(grade_idx), credit);
+		
+		return grade_idx; 
+			
+	}
+	printf("수강 포기\n");
+	return -1;
+	 
+};
+float calcAverageGrade(int player)//calculate average grade of the player
+{
+	int i;
+    int len = smmdb_len(LISTNO_OFFSET_GRADE + player);
+    void *gradePtr;
+    int totalCredits = 0;
+    float totalScore = 0.0;
+    
+    float gradeScores[] = {4.5f, 4.0f, 3.5f, 3.0f, 2.5f, 2.0f, 1.5f, 1.0f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f};
+
+    if (len == 0) return 0.0f;
+
+    for (i = 0; i < len; i++) {
+        gradePtr = smmdb_getData(LISTNO_OFFSET_GRADE + player, i);
+        if (gradePtr != NULL) {
+            int grade = smmObj_getObjectGrade(gradePtr);
+            int credit = smmObj_getObjectCredit(gradePtr);
+            
+            if (grade >= 0 && grade < SMMNODE_MAX_GRADE) {
+                totalScore += gradeScores[grade] * credit;
+                totalCredits += credit;
+            }
+        }
+}
+if (totalCredits == 0) return 0.0f;
+return totalScore / totalCredits;
+}
+void printGrades(int player) //print grade history of the player
+{
+	int i;
+    int len = smmdb_len(LISTNO_OFFSET_GRADE + player);
+    void *gradePtr;
+    
+    printf("\n--- %s's Grade History (Total: %i credits) ---\n", 
+           smm_players[player].name, smm_players[player].credit);
+    
+    for (i = 0; i < len; i++) {
+        gradePtr = smmdb_getData(LISTNO_OFFSET_GRADE + player, i);
+        if (gradePtr != NULL) {
+            printf("[%i] %s (Credit: %i) - Grade: %s\n",
+                   i + 1,
+                   smmObj_getObjectName(gradePtr),
+                   smmObj_getObjectCredit(gradePtr),
+                   smmObj_getGradeName(smmObj_getObjectGrade(gradePtr))); // smmObj_getGradeName 사용
+        }
+    }
+}
+
 int isGraduated(void) //check if any player is graduated
 {
 	int i;
@@ -62,29 +160,26 @@ void goForward(int player, int step)
     int i;
     void *ptr;
     
+    
     //player_pos[player] = player_pos[player]+ step;
     ptr = smmdb_getData(LISTNO_NODE, smm_players[player].pos);
     printf("start from %i(%s) (%i)\n", smm_players[player].pos, 
                                          smmObj_getObjectName(ptr), step);
-
     for (i=0;i<step;i++)
     {
         smm_players[player].pos = (smm_players[player].pos + 1)%smm_board_nr;
-        ptr = smmdb_getData(LISTNO_NODE, smm_players[player].pos);
         printf("  => moved to %i(%s)\n", smm_players[player].pos, 
-                                         smmObj_getObjectName(ptr));
+                                         smmObj_getNodeName(smm_players[player].pos));
     }
 }
 
 void printPlayerStatus(void)
 {
      int i;
-     void *ptr;
      for (i=0;i<smm_player_nr;i++)
      {
-     	ptr = smmdb_getData(LISTNO_NODE, smm_players[i].pos);
-        printf("%s - position:%i(%s), credit:%i, energy:%i\n",
-                    smm_players[i].name,smm_players[i].pos, smmObj_getObjectName(ptr));
+         printf("%s - position:%i(%s), credit:%i, energy:%i\n",
+                    smm_players[i].name, smm_players[i].pos, smmObj_getNodeName(smm_players[i].pos), smm_players[i].credit, smm_players[i].energy);
      }
 }
 
@@ -92,7 +187,7 @@ void generatePlayers(int n, int initEnergy) //generate a new player
 {
      int i;
      
-     smm_players = (smm_player_t*)malloc(n * sizeof(smm_player_t));
+     smm_players = (smm_player_t*)malloc(n*sizeof(smm_player_t));
      
      for (i=0;i<n;i++)
      {
@@ -100,20 +195,21 @@ void generatePlayers(int n, int initEnergy) //generate a new player
          smm_players[i].credit = 0;
          smm_players[i].energy = initEnergy;
          smm_players[i].flag_graduated = 0;
-
+         
          printf("Input %i-th player name:", i);
-         scanf("%s", &smm_players[i].name[0]); 
+         scanf("%s", &smm_players[i].name[0]);
+         fflush(stdin); 
      }
 }
-
 
 int rolldie(int player)
 {
     char c;
     printf(" Press any key to roll a die (press g to see grade): ");
     c = getchar();
+    fflush(stdin);
     
-#if 0
+#if 1
     if (c == 'g')
         printGrades(player);
 #endif
@@ -126,6 +222,7 @@ int rolldie(int player)
 void actionNode(int player)
 {
 	void *ptr = smmdb_getData(LISTNO_NODE,smm_players[player].pos);
+	
 	int type = smmObj_getObjectType (ptr);
 	int credit = smmObj_getObjectCredit (ptr);
 	int energy = smmObj_getObjectEnergy (ptr);
@@ -312,4 +409,5 @@ int main(int argc, const char * argv[]) {
 #endif
 	system("PAUSE");
     return 0;
+
 }
