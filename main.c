@@ -92,7 +92,6 @@ smmGrade_e takeLecture(int player, char *lectureName, int credit) //take the lec
 {
 	int selection;
 	smmGrade_e grade;
-	int grade_idx;
 	
 	//1.수강 여부 확인
 	printf("%s 강의를 수강하시겠습니까? (수강 시 1, 수강 포기 시 0)", lectureName);
@@ -101,9 +100,9 @@ smmGrade_e takeLecture(int player, char *lectureName, int credit) //take the lec
 	if (selection == 1){
 		grade = (smmGrade_e)(rand() % 9);
 		
-		printf("성적 결과: %s, %d 학점\n", get_grade_str(grade_idx), credit);
+		printf("성적 결과: %s, %d 학점\n", get_grade_str(grade), credit);
 		
-		return grade_idx; 
+		return grade; 
 			
 	}
 	printf("수강 포기\n");
