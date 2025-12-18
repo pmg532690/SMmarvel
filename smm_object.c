@@ -16,19 +16,16 @@
 
 
 
-#define GRADE_A+		0
+#define GRADE_AP		0
 #define GRADE_A0		1
-#define GRADE_A-		2
-#define GRADE_B+		3
+#define GRADE_AM		2
+#define GRADE_BP		3
 #define GRADE_B0		4
-#define GRADE_B-		5
-#define GRADE_C+		6
+#define GRADE_BM		5
+#define GRADE_CP		6
 #define GRADE_C0		7
-#define GRADE_C-		8
-#define GRADE_D+		9
-#define GRADE_D0		10
-#define GRADE_D-		11
-#define GRADE_F			12
+#define GRADE_CM		8
+
 
 static char smmObj_nodeName [MAX_NODETYPE][MAX_CHARNAME] = {
 		"lecture",
@@ -52,10 +49,6 @@ static char smmObj_gradeName [MAX_GRADE][MAX_CHARNAME] = {
 		"C+",
 		"C0",
 		"C-",
-		"D+",
-		"D0",
-		"D-",
-		"F"
 };
 
 
@@ -94,7 +87,7 @@ char* smmObj_getObjectName(void *ptr)
 	smmObj_object_t* objPtr = (smmObj_object_t*)ptr;
 	return (objPtr-> name);
 }
-int smmObj_getObjectType(void *ptr) // smmObj_getNodeName(void *ptr) 처럼 다 바꾸기 
+int smmObj_getObjectType(void *ptr) // smmObj_getNodeName(void *ptr) o?? ?? ???? 
 {
 	smmObj_object_t* objPtr = (smmObj_object_t*)ptr;
 	return (objPtr-> type);
