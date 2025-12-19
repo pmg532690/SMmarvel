@@ -30,6 +30,8 @@ typedef struct {
 	int credit;
 	int energy;
 	int flag_graduated;
+	int lab_status;
+	int lab_goal;
 }smm_player_t;
 
 smm_player_t *smm_players;
@@ -74,6 +76,26 @@ void* findGrade(int player, char *lectureName) //find the grade from the player'
 void printGrades(int player); //print all the grade history of the player
 #endif
 
+void goForward(int player, int step)
+{
+	int i;
+	for (i=0;i < step; i++)
+	{
+		//한칸씩 이동
+		smm_players[player].pos = (smm_players[player].pos + 1) % smm_board_nr;
+		
+		void* current_ptr = smmdb_getData(LISTNO_NODE, smm_players[player].pos);
+		printf("현재 위치는 %s 입니다", smmObj_getObjectName(current_ptr));
+		
+		if (smm_players[player].pos = 0 ) //집을 지나가는 경우 
+		{
+			int home_energy = smmObj_getObjectEnergy(current_ptr);
+			smm_players[player].energy += home_energy;
+			printf("집에 도착했습니다! 현재 에너지 %d에서 %d 보충",smm_players[player].energy, home_energy ); 
+		 }		 
+	}
+}
+
 char* get_grade_str(int grade_idx) {
     switch(grade_idx) {
         case 0: return "A+";
@@ -106,7 +128,7 @@ smmGrade_e takeLecture(int player, char *lectureName, int credit) //take the lec
 			
 	}
 	printf("수강 포기\n");
-	return -1;
+	return (smmGrade_e)-1;
 	 
 };
 float calcAverageGrade(int player)//calculate average grade of the player
@@ -170,23 +192,7 @@ int isGraduated(void) //check if any player is graduated
 }  
 
 
-void goForward(int player, int step)
-{ //make player go "step" steps on the board (check if player is graduated)
-    int i;
-    void *ptr;
-    
-    
-    //player_pos[player] = player_pos[player]+ step;
-    ptr = smmdb_getData(LISTNO_NODE, smm_players[player].pos);
-    printf("start from %i(%s) (%i)\n", smm_players[player].pos, 
-                                         smmObj_getObjectName(ptr), step);
-    for (i=0;i<step;i++)
-    {
-        smm_players[player].pos = (smm_players[player].pos + 1)%smm_board_nr;
-        printf("  => moved to %i(%s)\n", smm_players[player].pos, 
-                                         smmObj_getNodeName(smm_players[player].pos));
-    }
-}
+
 
 void printPlayerStatus(void)
 {
@@ -244,7 +250,7 @@ void actionNode(int player)
 	char* nodeName = smmObj_getObjectName(ptr);
 	
 	printf(" --> player%i pos : %i, type : %s, credit : %i, energy : %i\n",
-			player, smm_players[player].pos, smmObj_getNodeName(type), credit, energy);
+			smm_players[player].name, smm_players[player].pos, smmObj_getNodeName(type), credit, energy);
 			
     switch(type)
     {
@@ -285,11 +291,34 @@ void actionNode(int player)
         		smm_players[player].flag_graduated = 1;//졸업 
 			}
             break;
-        case SMMNODE_TYPE_GOTOLAB:
+        case SMMNODE_TYPE_GOTOLAB: //실험 노드
+			smm_players[player].lab_status = 1;
+			smm_players[player].lab_goal = (rand()% MAX_DIE) + 1;
+			
+			int i;
+			for(i = 0; i < smm_board_nr; i++ ){
+				void* search_ptr = smmdb_getData(LISTNO_NODE, i);
+				if (smmObj_getObjectType(search_ptr) == SMMNODE_TYPE_LABORATORY){
+					smm_players[player].pos = i;
+					break;
+				}
+			}
+			printf("실험실에 도착했습니다.");
             break;
         case SMMNODE_TYPE_FOODCHANGE:
+        	if (smm_food_nr > 0){
+        		int food_idx = rand() % smm_food_nr;
+        		void* food_ptr = smmdb_getData(LISTNO_FOODCARD, food_idx);
+        		int food_energy = smmObj_getObjectEnergy;
+        		printf("에너지 %d 만큼이 보충됨! \n", food_energy);
+			} 
             break;
         case SMMNODE_TYPE_FESTIVAL:
+        	if(smm_festival_nr > 0){
+        		int fest_idx = rand() % smm_festival_nr;
+        		void* fest_ptr = smmdb_getData(LISTNO_FESTCARD, fest_idx);
+        		printf("미션: %s\n", smmObj_getObjectName(fest_ptr));
+			}
             break;
             
         default:
@@ -416,25 +445,56 @@ int main(int argc, const char * argv[]) {
         //4-1. initial printing
         printPlayerStatus();
         
-        //4-2. die rolling (if not in experiment)
-        die_result = rolldie(turn);
-        printf("\nPlayer %s rolled a %i.\n", smm_players[turn].name, die_result);
-        
-        //4-3. go forward
-        goForward(turn, die_result);
-       
-		//pos = pos + 2;
-
-		
-		//4-4. take action at the destination node of the board
-        actionNode(turn);
-        
+        if (smm_players[turn].lab_status == 1)
+        {//if in experiment 
+       		die_result = rolldie(turn);
+       		printf("\n 실험 탈출 시도.Player %s rolled a %i.\n", smm_players[turn].name, die_result);
+       		
+       		void* lab_node = smmdb_getData(LISTNO_NODE, smm_players[turn].pos);
+			smm_players[turn].energy -= smmObj_getObjectEnergy(lab_node);
+			
+			if (die_result >= smm_players[turn].lab_goal)
+			{
+				printf("탈출 성공!\n");
+				smm_players[turn].lab_status = 0;
+				goForward(turn, die_result);
+				actionNode(turn);
+			}
+			else
+            {
+                printf("탈출 실패!\n");
+            }	 
+	    }
+	     //4-2. die rolling (if not in experiment)
+	    else{
+	    	die_result = rolldie(turn);
+	    	printf("\n Player %s rolled a %i.\n", smm_players[turn].name, die_result);
+	    	//4-3. go forward
+	    	goForward(turn, die_result);
+	    	//4-4. take action at the destination node of the board
+	    	actionNode(turn);
+		}
+   
         //4-5. next turn
         turn = (turn+1)%smm_player_nr;
 
     }
     
     printf("\n\n--- Game Over ---\n");
+    
+    int winner = -1;
+    int i;
+    for(i=0; i<smm_player_nr;i++){
+    	if(smm_players[i].flag_graduated == 1){
+    		winner = i;
+    		break;
+		}
+	}
+	
+	if (winner != -1){
+		printf("%s 가 졸업했습니다!\n", smm_players[winner].name);
+		printGrades(winner);
+	}
     printPlayerStatus();
     printf("A player has graduated!\n");
     
