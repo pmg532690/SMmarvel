@@ -10,7 +10,7 @@
 #include "smm_object.h"
 #include "smm_database.h"
 #include "smm_common.h"
-
+//prototyping
 void* findGrade(int player, char *lectureName); 
 
 #define BOARDFILEPATH "marbleBoardConfig.txt"
@@ -36,45 +36,7 @@ typedef struct {
 
 smm_player_t *smm_players;
 
-void generatePlayers(int n, int initEnergy); //generate a new player
-void printPlayerStatus(void); //print all player status at the beginning of each turn
-
 //function prototypes
-#if 0
-void readingboard(){
-	FILE * fp = fopen("marbleBoardConfig.txt", "r");
-	
-	char name[50];
-	int type, credit, energy;
-	
-	while(fscanf(fp, "%d %d %d %d", name, &type, &credit, &energy) != EOF){
-		//정보 읽어오기
-		void* newNode = smm_obj_create(name, type, credit, energy);
-		
-		//데이터베이스에 정보 저장
-		smm_add_node(newNode); 
-	}
-	fclose(fp);
-}
-void* findGrade(int player, char *lectureName) //find the grade from the player's grade history
-{
-      int size = smmdb_len(LISTNO_OFFSET_GRADE+player);
-      int i;
-      
-      for (i=0;i<size;i++)
-      {
-          void *ptr = smmdb_getData(LISTNO_OFFSET_GRADE+player, i);
-          if (strcmp(smmObj_getObjectName(ptr), lectureName) == 0)
-          {
-              return ptr;
-          }
-      }
-      
-      return NULL;
-}
-
-void printGrades(int player); //print all the grade history of the player
-#endif
 
 void goForward(int player, int step)
 {
@@ -96,6 +58,24 @@ void goForward(int player, int step)
 	}
 }
 
+void readingboard(){
+	FILE * fp = fopen(BOARDFILEPATH, "r");
+	
+	char name[MAX_CHARNAME];
+	int type, credit, energy;
+	
+	while(fscanf(fp, "%s %d %d %d", name, &type, &credit, &energy) == 4){
+		//정보 읽어오기
+		void* newNode = smmObj_getObject(name, SMMNODE_OBJTYPE_BOARD, type, credit,energy,0);
+		
+		//데이터베이스에 정보 저장
+		smmdb_addTail(LISTNO_NODE, newNode); 
+	}
+	fclose(fp);
+}
+void* findGrade(int player, char *lectureName); //find the grade from the player's grade history
+
+
 char* get_grade_str(int grade_idx) {
     switch(grade_idx) {
         case 0: return "A+";
@@ -110,6 +90,7 @@ char* get_grade_str(int grade_idx) {
         default: return "ERROR";
     }
 }
+
 smmGrade_e takeLecture(int player, char *lectureName, int credit) //take the lecture (insert a grade of the player)
 {
 	int selection;
@@ -120,7 +101,7 @@ smmGrade_e takeLecture(int player, char *lectureName, int credit) //take the lec
 	scanf("%d", &selection);
 	//2.성적 배정 
 	if (selection == 1){
-		grade = (smmGrade_e)(rand() % 9);
+		smmGrade_e grade = (smmGrade_e)(rand() % 9);
 		
 		printf("성적 결과: %s, %d 학점\n", get_grade_str(grade), credit);
 		
@@ -131,6 +112,7 @@ smmGrade_e takeLecture(int player, char *lectureName, int credit) //take the lec
 	return (smmGrade_e)-1;
 	 
 };
+
 float calcAverageGrade(int player)//calculate average grade of the player
 {
 	int i;
