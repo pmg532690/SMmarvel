@@ -87,7 +87,7 @@ void goForward(int player, int step)
 		void* current_ptr = smmdb_getData(LISTNO_NODE, smm_players[player].pos);
 		printf("현재 위치는 %s 입니다", smmObj_getObjectName(current_ptr));
 		
-		if (smm_players[player].pos = 0 ) //집을 지나가는 경우 
+		if (smm_players[player].pos == 0 ) //집을 지나가는 경우 
 		{
 			int home_energy = smmObj_getObjectEnergy(current_ptr);
 			smm_players[player].energy += home_energy;
@@ -309,7 +309,7 @@ void actionNode(int player)
         	if (smm_food_nr > 0){
         		int food_idx = rand() % smm_food_nr;
         		void* food_ptr = smmdb_getData(LISTNO_FOODCARD, food_idx);
-        		int food_energy = smmObj_getObjectEnergy;
+        		int food_energy = smmObj_getObjectEnergy(food_ptr);
         		printf("에너지 %d 만큼이 보충됨! \n", food_energy);
 			} 
             break;
